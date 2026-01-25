@@ -1,0 +1,15 @@
+includes:
+    - ./vendor/nunomaduro/larastan/extension.neon
+
+parameters:
+    level: max
+    paths:
+        - app
+        - database
+        - routes
+        - Modules
+    excludePaths:
+        - _ide_helper.php
+        - _ide_helper_models.php
+        - */vendor/*
+        - config/data.php

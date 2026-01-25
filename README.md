@@ -1,59 +1,249 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🚀 MarketScope Telegram Bot
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**MarketScope** is a SaaS platform for real-time OLX monitoring. The system utilizes a hybrid architecture (Laravel + Python), Redis queues, and AI (OpenAI GPT-4o) to analyze deal value, filter scams, and instantly notify users via Telegram.
 
-## About Laravel
+## 🛠 Tech Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Backend (Laravel 11)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+* **Architecture:** Modular Monolith (`nwidart/laravel-modules`)
+* **Database:** PostgreSQL 18
+* **Cache & Queues:** Redis
+* **Admin Panel:** FilamentPHP
+* **Telegram Bot:** `defstudio/telegraph`
+* **AI Integration:** `openai-php/laravel`
+* **DTOs:** `spatie/laravel-data`
+* **Monitoring:** `laravel/horizon`, `opcodesio/log-viewer`
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Scraper Microservice (Python)
 
-## Learning Laravel
+* **Core:** Python 3.10
+* **Browser Automation:** Playwright (Headless Chromium)
+* **Communication:** Redis Pub/Sub & Queues
+* **Image Processing:** OpenCV (Blur & Duplicate detection)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## ⚙️ Prerequisites
 
-## Laravel Sponsors
+You **do not need** PHP, Composer, or Python installed on your local machine. Everything runs inside isolated Docker containers.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+**Requirements:**
 
-### Premium Partners
+* **Docker Desktop** (or Docker Engine on Linux/WSL)
+* **Git**
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+---
 
-## Contributing
+## 🚀 Installation & Setup
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 1. Clone Repository
 
-## Code of Conduct
+```bash
+git clone https://github.com/USERNAME/market-scope-telegram.git
+cd market-scope-telegram
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```
 
-## Security Vulnerabilities
+### 2. Environment Setup
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Copy the configuration file:
 
-## License
+```bash
+cp .env.example .env
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```
+
+Open `.env` and configure critical keys:
+
+```ini
+OPENAI_API_KEY=sk-proj-...
+TELEGRAM_BOT_TOKEN=123456:ABC-DEF...
+DB_PASSWORD=secret
+
+```
+
+### 3. Start Containers (Docker Sail)
+
+This command builds the images (Laravel + Python Scraper) and starts them. The first run may take time to download Playwright browsers.
+
+```bash
+./vendor/bin/sail up -d --build
+
+```
+
+> **Tip:** It is recommended to add an alias `alias sail='./vendor/bin/sail'` to your `.bashrc` or `.zshrc`. The instructions below assume you use the `sail` command.
+
+### 4. Install Dependencies & Migrate
+
+```bash
+# Install PHP dependencies
+sail composer install
+
+# Generate App Key
+sail artisan key:generate
+
+# Run Database Migrations
+sail artisan migrate
+
+# Install Frontend dependencies (for Filament/Vite)
+sail npm install
+sail npm run build
+
+```
+
+### 5. Verify Status
+
+Check if all services (Laravel, Postgres, Redis, Scraper) are running:
+
+```bash
+sail ps
+
+```
+
+You should see 4 containers with status `Up`.
+
+---
+
+## 🖥 Available Services
+
+After running `sail up`:
+
+| Service | URL / Port | Description |
+| --- | --- | --- |
+| **Web App** | `http://localhost` | Main App / API |
+| **Horizon** | `http://localhost/horizon` | Queue Monitoring (Redis) |
+| **Log Viewer** | `http://localhost/log-viewer` | Laravel Logs UI |
+| **Postgres** | `localhost:5432` | Database |
+| **Redis** | `localhost:6379` | Cache & Queues |
+| **Mailpit** | `http://localhost:8025` | Email Testing |
+
+---
+
+## 🛡 Git Hooks & Quality Control
+
+We enforce strict code quality and security checks.
+
+### Installing Hooks
+
+To activate hooks locally, run (assuming scripts are in `githooks/`):
+
+```bash
+cp githooks/pre-commit .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+
+cp githooks/pre-push .git/hooks/pre-push
+chmod +x .git/hooks/pre-push
+
+```
+
+### 1. Pre-commit Hook
+
+Checks run before committing:
+
+* **PHP Syntax Check:** (`php -l`)
+* **Strict Types:** Ensures `declare(strict_types=1);` exists in all PHP files.
+* **Security:** Prevents committing `.env` files.
+* **Gitleaks:** (Optional) Scans for exposed secrets/keys.
+
+### 2. Pre-push Hook
+
+Checks run before pushing (blocks push on failure):
+
+* **PHPStan / Larastan:** Runs static analysis at max level.
+* **PHPUnit:** Runs full test suite.
+
+### Requirements for Hooks
+
+```bash
+sail composer require --dev phpstan/phpstan nunomaduro/larastan phpunit/phpunit
+
+```
+
+All new PHP files must start with:
+
+```php
+<?php
+declare(strict_types=1);
+
+```
+
+Example `phpstan.neon`:
+
+```neon
+includes:
+    - ./vendor/nunomaduro/larastan/extension.neon
+
+parameters:
+    level: max
+    paths:
+        - app
+        - database
+        - routes
+
+```
+
+---
+
+## 📂 Project Structure
+
+The project is structured as a Monorepo:
+
+```text
+market-scope-telegram/
+├── app/                 # Laravel Core Logic
+├── Modules/             # Domain Modules (Telegram, Scraper, Admin)
+├── scraper/             # Python Microservice
+│   ├── main.py          # Worker Entry Point
+│   ├── Dockerfile       # Playwright Environment
+│   └── requirements.txt # Python Dependencies
+├── docker-compose.yml   # Container Orchestration
+└── ...
+
+```
+
+---
+
+## 📝 IDE Helper (Dev Only)
+
+We use **Laravel IDE Helper** to improve autocomplete and PHPDoc for models and facades.
+
+### Install
+
+```bash
+sail composer require --dev barryvdh/laravel-ide-helper
+```
+
+### Generate Helper Files
+
+```bash
+sail artisan ide-helper:generate   # general helpers
+sail artisan ide-helper:meta       # PhpStorm meta
+sail artisan ide-helper:models -W  # model PHPDocs
+```
+
+> Dev-only; don’t commit `_ide_helper.php` to production. Run after adding models or changing migrations.
+
+---
+
+## 🐞 Troubleshooting
+
+**1. Python Scraper cannot connect to Redis?**
+Ensure `scraper/main.py` uses `os.getenv('REDIS_HOST', 'redis')`. Inside the Docker network, services must use service names, not `localhost`.
+
+**2. Permission Denied?**
+If running on Linux/WSL, Sail might create files as root. Fix permissions:
+
+```bash
+sail root-shell chown -R sail:sail .
+
+```
+
+**3. How to restart the scraper after code changes?**
+
+```bash
+sail restart scraper
+# Or if requirements.txt changed (needs rebuild):
+sail build scraper && sail up -d scraper
+
+```

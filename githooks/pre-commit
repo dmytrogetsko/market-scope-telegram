@@ -1,0 +1,76 @@
+#!/bin/bash
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+set -e
+
+display_error() {
+    echo -e "${RED}❌ $1${NC}"
+    exit 1
+}
+
+if [ -f "vendor/bin/sail" ]; then
+    SAIL="./vendor/bin/sail"
+else
+    echo -e "${RED}Sail not found!${NC}"
+    exit 1
+fi
+
+echo -e "${YELLOW}Running pre-commit checks...${NC}"
+
+# Get staged PHP files
+FILES=$(git diff --cached --name-only --diff-filter=d | grep ".php$" | grep -v "_ide_helper" | tr '\n' ' ')
+
+if [ -z "$FILES" ]; then
+    echo -e "${GREEN}No PHP files staged. Skipping checks.${NC}"
+    exit 0
+fi
+
+# PHP Syntax check (Batch Mode)
+echo -e "🔍 Checking syntax..."
+
+SAIL_SKIP_TTY=1 $SAIL php -r "
+    \$files = array_slice(\$argv, 1);
+    \$hasError = false;
+    foreach (\$files as \$file) {
+        if (!file_exists(\$file)) continue;
+        \$output = [];
+        \$returnVar = 0;
+        exec('php -l ' . escapeshellarg(\$file), \$output, \$returnVar);
+        if (\$returnVar !== 0) {
+            echo implode(PHP_EOL, \$output) . PHP_EOL;
+            \$hasError = true;
+        }
+    }
+    if (\$hasError) exit(1);
+" $FILES
+
+if [ $? -ne 0 ]; then
+    display_error "Syntax errors found!"
+fi
+
+# strict Types Check (Local Grep)
+for FILE in $FILES; do
+    # Skip configs and migrations
+    if [[ "$FILE" == config/* ]]; then continue; fi
+    if [[ "$FILE" == database/migrations/* ]]; then continue; fi
+    if [[ "$FILE" == lang/* ]]; then continue; fi       # <--- Твоя помилка була тут
+    if [[ "$FILE" == resources/* ]]; then continue; fi  # В'юхи не треба
+    if [[ "$FILE" == public/* ]]; then continue; fi
+    if [[ "$FILE" == stubs/* ]]; then continue; fi
+    # --------------------------------------
+
+    if ! grep -q "declare(strict_types=1);" "$FILE"; then
+        display_error "Strict types declaration missing in $FILE"
+    fi
+done
+
+# Protect .env
+if git diff --cached --name-only | grep -q ".env$"; then
+    display_error ".env file cannot be committed"
+fi
+
+echo -e "${GREEN}✅ All pre-commit checks passed!${NC}"
+exit 0
