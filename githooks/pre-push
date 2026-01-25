@@ -11,8 +11,14 @@ display_error() {
     exit 1
 }
 
+# Disable Xdebug
+export SAIL_XDEBUG_MODE=off
+export XDEBUG_MODE=off
+
+export SAIL_SKIP_TTY=1
+
 if [ -f "vendor/bin/sail" ]; then
-    SAIL="SAIL_XDEBUG_MODE=off ./vendor/bin/sail"
+    SAIL="./vendor/bin/sail"
 else
     display_error "Sail not found! Please run containers."
 fi
