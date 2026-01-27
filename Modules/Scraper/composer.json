@@ -1,0 +1,30 @@
+{
+    "name": "market-scope/scraper",
+    "description": "",
+    "authors": [
+        {
+            "name": "Dmytro Hetsko",
+            "email": "dmitro.getsko@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Scraper\\": "app/",
+            "Modules\\Scraper\\Database\\Factories\\": "database/factories/",
+            "Modules\\Scraper\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Scraper\\Tests\\": "tests/"
+        }
+    }
+}

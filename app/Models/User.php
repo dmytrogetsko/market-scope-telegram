@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Modules\Scraper\Models\Monitor;
 
 /**
- * @mixin IdeHelperUser
+ * @property string $name
+ * @property string $email
+ * @property int $monitor_limit
  */
 class User extends Authenticatable
 {
@@ -17,9 +21,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
+     * @var list<string> The attributes that are mass assignable.
      */
     protected $fillable = [
         'name',
@@ -39,9 +41,31 @@ class User extends Authenticatable
 
     /**
      * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    /**
+     * Get the monitors for the user.
+     *
+     * @return HasMany<Monitor, $this>
+     */
+    public function monitors(): HasMany
+    {
+        return $this->hasMany(Monitor::class);
+    }
+
+    /**
+     * Determine if the user can create a new monitor based on their limit.
+     *
+     * @return bool
+     */
+    public function canCreateMonitor(): bool
+    {
+        return $this->monitors()->count() < $this->monitor_limit;
+    }
 }

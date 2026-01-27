@@ -125,7 +125,7 @@ return [
      */
     'models' => [
         'bot' => DefStudio\Telegraph\Models\TelegraphBot::class,
-        'chat' => DefStudio\Telegraph\Models\TelegraphChat::class,
+        'chat' => App\Models\TelegraphChat::class,
     ],
 
     'storage' => [
