@@ -123,4 +123,7 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'internal' => [
+        'scraper_host' => env('INTERNAL_SCRAPER_HOST', 'scraper')
+    ]
 ];

@@ -20,10 +20,11 @@ services:
             PHP_IDE_CONFIG: '${PHP_IDE_CONFIG:-serverName=marketscope}'
         volumes:
             - '.:/var/www/html'
-            - './docker/xdebug.ini:/etc/php/8.3/cli/conf.d/20-xdebug.ini'
-            - './docker/xdebug.ini:/etc/php/8.3/fpm/conf.d/20-xdebug.ini'
+            - './docker/xdebug.ini:/etc/php/8.5/cli/conf.d/20-xdebug.ini'
+            - './docker/xdebug.ini:/etc/php/8.5/fpm/conf.d/20-xdebug.ini'
         networks:
             - sail
+            - scraping_net
         depends_on:
             - pgsql
             - redis
@@ -89,9 +90,40 @@ services:
                 - ping
             retries: 3
             timeout: 5s
+    python-scraper:
+        build:
+            context: ./python-scraper
+            dockerfile: Dockerfile
+        # TODO: remove before delpoyment
+        ports:
+            - '8001:8000'
+        networks:
+            - scraping_net
+    scheduler:
+        image: 'sail-8.5/app'
+        build:
+            context: ./vendor/laravel/sail/runtimes/8.5
+            dockerfile: Dockerfile
+            args:
+                WWWGROUP: '${WWWGROUP}'
+        environment:
+            WWWUSER: '${WWWUSER}'
+            LARAVEL_SAIL: 1
+        volumes:
+            - '.:/var/www/html'
+        depends_on:
+            - redis
+            - pgsql
+        command: php artisan schedule:work
+        networks:
+            - sail
+
 networks:
     sail:
         driver: bridge
+    scraping_net:
+        driver: bridge
+
 volumes:
     sail-pgsql:
         driver: local

@@ -28,6 +28,7 @@ return [
         'path' => base_path('stubs/nwidart-stubs'),
         'files' => [
             'routes/api' => 'routes/api.php',
+            'routes/console.php' => 'routes/console.php',
             'composer' => 'composer.json',
             'data' => 'Data/data.stub'
         ],

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ *  Represents a concrete product scraped from an external source.
+ *
  * @property int $id
  * @property int $monitor_id
  * @property string $external_id

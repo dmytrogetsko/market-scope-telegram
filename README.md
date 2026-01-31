@@ -32,6 +32,7 @@ You **do not need** PHP, Composer, or Python installed on your local machine. Ev
 
 * **Docker Desktop** (or Docker Engine on Linux/WSL)
 * **Git**
+* **Ngrok** (for local Telegram Webhook testing)
 
 ---
 
@@ -40,7 +41,7 @@ You **do not need** PHP, Composer, or Python installed on your local machine. Ev
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/USERNAME/market-scope-telegram.git
+git clone [https://github.com/USERNAME/market-scope-telegram.git](https://github.com/USERNAME/market-scope-telegram.git)
 cd market-scope-telegram
 
 ```
@@ -117,6 +118,57 @@ After running `sail up`:
 | **Postgres** | `localhost:5432` | Database |
 | **Redis** | `localhost:6379` | Cache & Queues |
 | **Mailpit** | `http://localhost:8025` | Email Testing |
+
+---
+
+## ⚡ Local Development Workflow (Makefile)
+
+A `Makefile` is included to simplify interactions with the Telegram Bot API, Ngrok, and Laravel queues during local development.
+
+### Setup
+
+Ensure your `Makefile` (in the project root) has the correct `BOT_TOKEN` set.
+
+### 🚀 Daily Startup Routine
+
+Since `ngrok` generates a new URL every time it restarts, follow this order:
+
+1. **Start the tunnel** (in a separate terminal tab):
+```bash
+make ngrok
+
+```
+
+
+*👉 Copy the generated HTTPS URL (e.g., `https://a1b2-c3d4.ngrok-free.app`)*
+2. **Register the new Webhook** (in a new tab):
+   Replace the URL with the one you copied above:
+```bash
+make set url=[https://your-url.ngrok-free.app/webhook-route](https://your-url.ngrok-free.app/webhook-route)
+
+```
+
+
+3. **Start Queue Processing**:
+```bash
+make horizon   # To start Laravel Horizon (Redis)
+# OR
+make worker    # To start standard queue:work
+
+```
+
+
+
+### 📋 Command Reference
+
+| Command | Description |
+| --- | --- |
+| `make ngrok` | Starts the ngrok tunnel on port 80. |
+| `make info` | Shows the current webhook status (where Telegram servers are sending updates). |
+| `make set url=...` | Sets a new URL for the bot webhook. |
+| `make horizon` | Starts the Horizon dashboard and processes. |
+| `make worker` | Starts the standard queue worker (`queue:work`). |
+| `make flush` | Clears the cache (useful when changing .env). |
 
 ---
 
@@ -198,6 +250,7 @@ market-scope-telegram/
 │   ├── Dockerfile       # Playwright Environment
 │   └── requirements.txt # Python Dependencies
 ├── docker-compose.yml   # Container Orchestration
+├── Makefile             # Shortcuts for Ngrok & Webhooks
 └── ...
 
 ```
@@ -212,6 +265,7 @@ We use **Laravel IDE Helper** to improve autocomplete and PHPDoc for models and 
 
 ```bash
 sail composer require --dev barryvdh/laravel-ide-helper
+
 ```
 
 ### Generate Helper Files
@@ -220,6 +274,7 @@ sail composer require --dev barryvdh/laravel-ide-helper
 sail artisan ide-helper:generate   # general helpers
 sail artisan ide-helper:meta       # PhpStorm meta
 sail artisan ide-helper:models -W  # model PHPDocs
+
 ```
 
 > Dev-only; don’t commit `_ide_helper.php` to production. Run after adding models or changing migrations.

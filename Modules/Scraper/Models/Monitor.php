@@ -10,7 +10,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
+ * Stores information about a monitor set up by a user to track listings(products).
+ *
  * @property int $id
+ * @property int $user_id
  * @property string $url
  * @property string $name
  * @property bool $is_active
