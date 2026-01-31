@@ -32,6 +32,7 @@ class RegisterUserAction
             return User::find($chat->user_id);
         }
 
+        /** @var User $user */
         $user = User::create([
             'name' => $username,
             'email' => $chat->chat_id . '@telegraph.bot', // Unique dummy email

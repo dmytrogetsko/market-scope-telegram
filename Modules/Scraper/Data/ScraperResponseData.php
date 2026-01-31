@@ -14,6 +14,10 @@ use Spatie\LaravelData\Attributes\DataCollectionOf;
  */
 class ScraperResponseData extends Data
 {
+    /**
+     * @param string|null $page_title The title of the scraped page.
+     * @param array<int, ScrapedItemData> $listings An array of scraped item data.
+     */
     public function __construct(
         public ?string $page_title,
 

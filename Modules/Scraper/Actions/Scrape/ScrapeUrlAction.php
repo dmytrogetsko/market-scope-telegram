@@ -37,7 +37,7 @@ class ScrapeUrlAction
     {
         Log::info("[ProcessMonitor] Start check for Monitor ID: {$monitor->id}");
 
-        $host = config('app.internal.scraper_host', 'http://python-scraper:8000');
+        $host = (string) config('app.internal.scraper_host', 'http://python-scraper:8000');
 
         try {
             $response = Http::timeout(45)->post("{$host}/scrape", [
@@ -84,19 +84,5 @@ class ScrapeUrlAction
             // Rethrow to let Horizon handle retries
             throw $e;
         }
-    }
-
-    /**
-     * Parse the price string to a float value.
-     *
-     * @param string|null $price The price string to parse.
-     *
-     * @return float|null The parsed price as a float, or null if not available.
-     */
-    private function parsePrice(string|null $price): ?float
-    {
-        if (!$price) return null;
-
-        return (float) preg_replace('/[^0-9.]/', '', $price);
     }
 }
