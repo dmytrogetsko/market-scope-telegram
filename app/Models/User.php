@@ -91,6 +91,8 @@ class User extends Authenticatable
 
     /**
      * User can have multiple Telegram chats (e.g. distinct chats or devices)
+     *
+     * @return HasMany<TelegraphChat, $this>
      */
     public function chats(): HasMany
     {

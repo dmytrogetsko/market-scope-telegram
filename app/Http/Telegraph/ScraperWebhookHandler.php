@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Telegraph;
 
+use App\Models\User;
 use DefStudio\Telegraph\Handlers\WebhookHandler;
 use DefStudio\Telegraph\Keyboard\Button;
 use DefStudio\Telegraph\Keyboard\Keyboard;
@@ -14,10 +15,19 @@ use Modules\Scraper\Actions\Scrape\ScrapeUrlAction;
 use Modules\Scraper\Actions\User\RegisterUserAction;
 use Throwable;
 
+/**
+ * Telegram Webhook Handler for the Scraper Bot.
+ *
+ * Handles commands and messages to manage OLX monitoring.
+ *
+ * @package App\Http\Telegraph
+ */
 class ScraperWebhookHandler extends WebhookHandler
 {
     /**
      * Triggered by the /start command.
+     *
+     * @return void
      */
     public function start(): void
     {
@@ -31,6 +41,8 @@ class ScraperWebhookHandler extends WebhookHandler
 
     /**
      * Triggered by the /help command.
+     *
+     * @return void
      */
     public function help(): void
     {
@@ -40,6 +52,10 @@ class ScraperWebhookHandler extends WebhookHandler
 
     /**
      * Handle incoming text messages.
+     *
+     * @param Stringable $text The text message received.
+     *
+     * @return void
      */
     protected function handleChatMessage(Stringable $text): void
     {
@@ -72,8 +88,10 @@ class ScraperWebhookHandler extends WebhookHandler
 
     /**
      * Helper to call the Registration Action using current context.
+     *
+     * @return User
      */
-    protected function registerUser(): \App\Models\User
+    protected function registerUser(): User
     {
         // Assuming 'first_name' exists, if not, fallback to username or default
         $name = $this->message?->from()?->firstName()
@@ -84,6 +102,10 @@ class ScraperWebhookHandler extends WebhookHandler
 
     /**
      * Centralized exception handling for user feedback.
+     *
+     * @param Throwable $e The exception to handle.
+     *
+     * @return void
      */
     protected function handleException(Throwable $e): void
     {

@@ -6,20 +6,39 @@ namespace Modules\Scraper\Data;
 
 use Spatie\LaravelData\Data;
 
+/**
+ * Data class representing a scraped item.
+ *
+ * @package Modules\Scraper\Data
+ */
 class ScrapedItemData extends Data
 {
     /**
-     * @param string $external_id
-     * @param string $title
-     * @param float|null $price
+     * @param string $id
      * @param string $url
-     * @param string|null $image_url
+     * @param string $title
+     * @param string|null $price
+     * @param string|null $image
      */
     public function __construct(
-        public string $external_id,
-        public string $title,
-        public ?float $price,
+        public string $id,
         public string $url,
-        public ?string $image_url = null,
+        public string $title,
+        public ?string $price,
+        public ?string $image,
     ) {}
+
+    /**
+     * Get the cleaned price as a float, removing any non-numeric characters.
+     *
+     * @return float|null The cleaned price or null if price is not set.
+     */
+    public function getCleanPrice(): ?float
+    {
+        if (!$this->price) {
+            return null;
+        }
+
+        return (float) preg_replace('/[^0-9.]/', '', $this->price);
+    }
 }

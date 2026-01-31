@@ -7,6 +7,7 @@ namespace Modules\Scraper\Actions\Scrape;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Lorisleiva\Actions\Concerns\AsAction;
+use Modules\Scraper\Data\ScraperResponseData;
 use Modules\Scraper\Models\Monitor;
 
 /**
@@ -47,26 +48,25 @@ class ScrapeUrlAction
                 throw new \Exception("Scraper API failed: " . $response->body());
             }
 
-            $data = $response->json();
+            $data = ScraperResponseData::from($response->json());
 
             $monitor->update([
                 'last_checked_at' => now(),
-                'name' => $data['page_title'] ?? $monitor->name,
+                'name' => $data->page_title ?? $monitor->name,
             ]);
 
             $newItemsCount = 0;
-            $listings = $data['listings'] ?? [];
 
-            foreach ($listings as $item) {
+            foreach ($data->listings as $item) {
                 $listing = $monitor->listings()->updateOrCreate(
-                    ['external_id' => $item['id']], // Unique identifier from OLX
+                    ['external_id' => $item->id],
                     [
-                        'url' => $item['url'],
-                        'title' => $item['title'],
-                        'price' => $this->parsePrice($item['price'] ?? null),
-                        'image_url' => $item['image'] ?? null,
+                        'url'       => $item->url,
+                        'title'     => $item->title,
+                        'price'     => $item->getCleanPrice(),
+                        'image_url' => $item->image,
                         'posted_at' => now(),
-                        'raw_data' => $item,
+                        'raw_data'  => $item->toArray(),
                     ]
                 );
 
