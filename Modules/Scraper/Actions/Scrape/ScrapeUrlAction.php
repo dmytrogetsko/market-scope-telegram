@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace Modules\Scraper\Actions\Scrape;
 
+use Exception;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Lorisleiva\Actions\Concerns\AsAction;
+use Modules\Scraper\Actions\Monitor\HandleMonitorFailureAction;
 use Modules\Scraper\Data\ScraperResponseData;
 use Modules\Scraper\Models\Monitor;
 
 /**
  * Action to scrape a URL using an external Python scraper service.
+ * Refactored to act as an Orchestrator.
  *
  * @package Modules\Scraper\Actions\Scrape
  */
@@ -25,64 +29,64 @@ class ScrapeUrlAction
     public int $jobTimeout = 120;
 
     /**
-     * Handle the scraping of the given monitor's URL.
+     * Main handler to perform the scraping of a monitor's URL.
      *
-     * @param Monitor $monitor The monitor instance containing the URL to scrape.
-     *
+     * @param Monitor $monitor
      * @return void
      *
-     * @throws \Exception If the scraping fails or the response is invalid.
+     * @throws ConnectionException
      */
     public function handle(Monitor $monitor): void
     {
+        if (!$monitor->is_active) {
+            return;
+        }
+
         Log::info("[ProcessMonitor] Start check for Monitor ID: {$monitor->id}");
 
-        $host = (string) config('app.internal.scraper_host', 'http://python-scraper:8000');
-
         try {
-            $response = Http::timeout(45)->post("{$host}/scrape", [
-                'url' => $monitor->url,
+            // 1. Prepare Request Data
+            $existingIds = $monitor->listings()
+                ->orderBy('posted_at', 'desc')
+                ->limit(80)
+                ->pluck('external_id')
+                ->map(fn($id) => (string) $id)
+                ->toArray();
+
+            $isFirstRun = empty($existingIds);
+
+            // 2. Execute Request
+            $host = (string) config('app.internal.scraper_host', 'http://python-scraper:8000');
+
+            $response = Http::timeout(60)->post("{$host}/scrape", [
+                'url'          => $monitor->url,
+                'existing_ids' => $existingIds,
             ]);
 
             if ($response->failed()) {
-                throw new \Exception("Scraper API failed: " . $response->body());
+                throw new Exception("Scraper API failed: " . $response->body());
+            }
+
+            // 3. Handle Success
+            // Reset failures if we succeeded
+            if ($monitor->failures_count > 0) {
+                $monitor->update(['failures_count' => 0]);
             }
 
             $data = ScraperResponseData::from($response->json());
 
-            $monitor->update([
-                'last_checked_at' => now(),
-                'name' => $data->page_title ?? $monitor->name,
-            ]);
+            // 4. Delegate Processing (DB updates & Notifications)
+            $newCount = ProcessScrapedResponseAction::run($monitor, $data, $isFirstRun);
 
-            $newItemsCount = 0;
+            Log::info("[ProcessMonitor] Success. Found {$newCount} new items.", ['monitor_id' => $monitor->id]);
+        } catch (Exception $e) {
+            // 5. Handle Failure (Counter++ & Disable if needed)
+            HandleMonitorFailureAction::run($monitor, $e);
 
-            foreach ($data->listings as $item) {
-                $listing = $monitor->listings()->updateOrCreate(
-                    ['external_id' => $item->id],
-                    [
-                        'url'       => $item->url,
-                        'title'     => $item->title,
-                        'price'     => $item->getCleanPrice(),
-                        'image_url' => $item->image,
-                        'posted_at' => now(),
-                        'raw_data'  => $item->toArray(),
-                    ]
-                );
-
-                if ($listing->wasRecentlyCreated) {
-                    $newItemsCount++;
-                    // $this->notifyUser($monitor->user->chat_id, $listing);
-                }
+            // Rethrow for Horizon retries (only if not disabled)
+            if ($monitor->refresh()->is_active) {
+                throw $e;
             }
-
-            Log::info("[ProcessMonitor] Success. Found {$newItemsCount} new items.");
-
-        } catch (\Exception $e) {
-            Log::error("[ProcessMonitor] Failed: " . $e->getMessage());
-
-            // Rethrow to let Horizon handle retries
-            throw $e;
         }
     }
 }

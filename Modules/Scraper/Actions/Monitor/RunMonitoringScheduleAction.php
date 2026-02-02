@@ -18,10 +18,18 @@ class RunMonitoringScheduleAction
 {
     use AsAction;
 
-    // Allows to run this action as an Artisan command
-    // php artisan scraper:run-schedule
+    /**
+     * The command signature for scheduling.
+     *
+     * @var string
+     */
     public string $commandSignature = 'scraper:run-schedule';
 
+    /**
+     * Handle the action to run the monitoring schedule.
+     *
+     * @return void
+     */
     public function handle(): void
     {
         Log::info("[Scheduler] Start checking monitors...");

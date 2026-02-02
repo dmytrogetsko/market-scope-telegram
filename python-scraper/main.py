@@ -1,39 +1,14 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
-from typing import List, Optional
+from fastapi import FastAPI, HTTPException
+from core.schemas import ScrapeRequest, ScrapeResponse
+from core.olx_parser import OlxParser
 
 app = FastAPI()
-
-# Input Model
-class ScrapeRequest(BaseModel):
-    url: str
-
-# Listing Model (PHP: ScraperListingData)
-class ScrapedListing(BaseModel):
-    id: str
-    url: str
-    title: str
-    price: Optional[str] = None
-    image: Optional[str] = None
-
-# Response Model (PHP: ScraperResponseData)
-class ScrapeResponse(BaseModel):
-    page_title: Optional[str] = None
-    listings: List[ScrapedListing] = []
+parser = OlxParser()
 
 @app.post("/scrape", response_model=ScrapeResponse)
-async def scrape(item: ScrapeRequest):
-    print(f"Scraping URL: {item.url}")
-
-    listing_mock = ScrapedListing(
-        id="12345678",
-        url=item.url,
-        title="Sell Garage",
-        price="1 200 $",
-        image="https://olx.ua/image.jpg"
-    )
-
-    return ScrapeResponse(
-        page_title="Оголошення OLX - Гаражі",
-        listings=[listing_mock]
-    )
+async def scrape_endpoint(req: ScrapeRequest):
+    try:
+        return await parser.parse(req.url)
+    except Exception as e:
+        print(f"CRITICAL ERROR: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

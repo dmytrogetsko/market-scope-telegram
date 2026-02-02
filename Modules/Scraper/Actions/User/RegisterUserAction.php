@@ -22,11 +22,11 @@ class RegisterUserAction
      * Finds/Creates user and links them to the Telegram chat.
      *
      * @param TelegraphChat $chat The Telegram chat instance.
-     * @param string $username The username to assign if creating a new user.
+     * @param string|null $username The username to assign if creating a new user.
      *
      * @return User
      */
-    public function handle(TelegraphChat $chat, string $username = 'Telegram User'): User
+    public function handle(TelegraphChat $chat, ?string $username = 'Telegram User'): User
     {
         if ($chat->user_id) {
             return User::find($chat->user_id);
@@ -41,7 +41,6 @@ class RegisterUserAction
             'monitor_limit' => 3
         ]);
 
-        // 3. Link the chat to the new user
         $chat->user_id = $user->id;
         $chat->save();
 

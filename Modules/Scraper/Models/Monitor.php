@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $url
  * @property string $name
  * @property bool $is_active
+ * @property int|null $failures_count
  * @property \Illuminate\Support\Carbon|null $last_checked_at
  * @property array<string, mixed>|null $filters
  * @property \Illuminate\Support\Carbon|null $created_at
@@ -33,6 +34,7 @@ class Monitor extends Model
         'url',
         'name',
         'is_active',
+        'failures_count',
         'last_checked_at',
         'filters',
     ];
@@ -44,6 +46,7 @@ class Monitor extends Model
         'is_active' => 'boolean',
         'last_checked_at' => 'datetime',
         'filters' => 'array',
+        'failures_count' => 'integer',
     ];
 
     /**

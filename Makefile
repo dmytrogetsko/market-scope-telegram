@@ -12,7 +12,7 @@ SAIL := ./vendor/bin/sail
 # Start ngrok on port 80
 ngrok:
 	# Starting ngrok tunnel...
-	ngrok http 80
+	ngrok http 80 --log=stdout --host-header="rewrite"
 
 # Check current webhook info
 info:
@@ -32,8 +32,11 @@ horizon:
 
 # Start Queue Worker (via Sail)
 worker:
-	# Starting Queue Worker inside Docker...
 	$(SAIL) artisan queue:work
+
+# Start Laravel Scheduler (via Sail)
+schedule:
+	$(SAIL) artisan schedule:work
 
 # Clear config and cache (via Sail)
 flush:
@@ -46,4 +49,5 @@ dev:
 	concurrently --kill-others \
 	"make ngrok" \
 	"make horizon" \
-	"make worker"
+	"make worker" \
+	"make schedule"

@@ -6,6 +6,8 @@ namespace Modules\Scraper\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Prunable;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  *  Represents a concrete product scraped from an external source.
@@ -25,6 +27,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Listing extends Model
 {
+    use Prunable;
+
     /**
      * @var list<string> The attributes that are mass assignable.
      */
@@ -56,5 +60,18 @@ class Listing extends Model
     public function monitor(): BelongsTo
     {
         return $this->belongsTo(Monitor::class);
+    }
+
+    /**
+     * Define the prunable query to delete listings older than 60 days.
+     *
+     * @return Builder<static>
+     */
+    public function prunable(): Builder
+    {
+        /** @var Builder<static> $query */
+        $query = static::where('posted_at', '<=', now()->subDays(60));
+
+        return $query;
     }
 }
